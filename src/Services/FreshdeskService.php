@@ -226,6 +226,14 @@ class FreshdeskService
     }
 
     /**
+     * @return string
+     */
+    public function getNewTicketUrl(): string
+    {
+        return $this->config->get('freshdesk.new_ticket_url');
+    }
+
+    /**
      * @param string $uri
      *
      * @return mixed
