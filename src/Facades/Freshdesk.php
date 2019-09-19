@@ -7,13 +7,16 @@ use Illuminate\Support\Facades\Facade;
 use KuznetsovZfort\Freshdesk\Services\FreshdeskService;
 
 /**
- * @method static bool|mixed getAgent(string $email)
+ * @method static mixed getAgent(string $email)
+ * @method static mixed getContact(string $email)
  * @method static bool hasAgent(string $email)
- * @method static bool|mixed getNewTickets()
+ * @method static mixed getNewTickets()
  * @method static bool isCurrentUserAgent()
  * @method static int|null getCurrentUserAgentId()
+ * @method static void setCurrentUserAgentId(int $agentId)
  * @method static int getTicketsCount(?int $status = null,?Carbon $from = null,?Carbon $to = null)
- * @method static bool|mixed apiCall(string $uri)
+ * @method static mixed apiCall(string $uri)
+ * @method static string getSsoUrl(string $name, string $email, ?string $redirect = null)
  *
  * @see FreshdeskService
  */

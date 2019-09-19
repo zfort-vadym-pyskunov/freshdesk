@@ -2,7 +2,11 @@
 
 namespace KuznetsovZfort\Freshdesk;
 
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use KuznetsovZfort\Freshdesk\Facades\Freshdesk;
 use KuznetsovZfort\Freshdesk\Services\FreshdeskService;
 
 class FreshdeskServiceProvider extends ServiceProvider
@@ -20,5 +24,13 @@ class FreshdeskServiceProvider extends ServiceProvider
         ], 'config');
 
         $this->mergeConfigFrom(__DIR__ . '/../config/freshdesk.php', 'freshdesk');
+
+        Event::listen(Login::class, function (string $eventName, array $data) {
+            Log::debug('login', [$data]);
+//            $agent = Freshdesk::getAgent('$event->user->email');
+//            if ($agent) {
+//                Freshdesk::setCurrentUserAgentId($agent->id);
+//            }
+        });
     }
 }

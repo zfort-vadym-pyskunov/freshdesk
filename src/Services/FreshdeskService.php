@@ -4,25 +4,22 @@ namespace KuznetsovZfort\Freshdesk\Services;
 
 use Exception;
 use Carbon\Carbon;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Session\Session;
 use KuznetsovZfort\Freshdesk\Enums\TicketStatus;
 use KuznetsovZfort\Freshdesk\Exceptions\ApiException;
-use Psr\Log\LoggerInterface;
+use KuznetsovZfort\Freshdesk\Facades\Freshdesk;
 
 class FreshdeskService
 {
     const FACADE_ACCESSOR = 'kuznetsov-zfort.freshdesk';
+    const AGENT_SESSION_KEY = 'freshdesk_agent_id';
 
     /**
      * @var Config
      */
     private $config;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $log;
 
     /**
      * @var Session
@@ -31,20 +28,20 @@ class FreshdeskService
 
     /**
      * @param Config $config
-     * @param LoggerInterface $log
      * @param Session $session
      */
-    public function __construct(Config $config, LoggerInterface $log, Session $session)
+    public function __construct(Config $config, Session $session)
     {
         $this->config = $config;
-        $this->log = $log;
         $this->session = $session;
     }
 
     /**
      * @param string $email
      *
-     * @return bool|mixed
+     * @return mixed
+     *
+     * @throws ApiException
      */
     public function getAgent(string $email)
     {
@@ -59,7 +56,26 @@ class FreshdeskService
     /**
      * @param string $email
      *
+     * @return mixed
+     *
+     * @throws ApiException
+     */
+    public function getContact(string $email)
+    {
+        $contacts = $this->apiCall('contacts?email=' . $email);
+        if (is_array($contacts)) {
+            return reset($contacts);
+        }
+
+        return $contacts;
+    }
+
+    /**
+     * @param string $email
+     *
      * @return bool
+     *
+     * @throws ApiException
      */
     public function hasAgent(string $email): bool
     {
@@ -67,7 +83,9 @@ class FreshdeskService
     }
 
     /**
-     * @return bool|mixed
+     * @return mixed
+     *
+     * @throws ApiException
      */
     public function getNewTickets()
     {
@@ -79,7 +97,7 @@ class FreshdeskService
      */
     public function isCurrentUserAgent(): bool
     {
-        return $this->session->has('freshdesk_agent_id');
+        return $this->session->has(self::AGENT_SESSION_KEY);
     }
 
     /**
@@ -87,7 +105,15 @@ class FreshdeskService
      */
     public function getCurrentUserAgentId(): ?int
     {
-        return $this->session->get('freshdesk_agent_id');
+        return $this->session->get(self::AGENT_SESSION_KEY);
+    }
+
+    /**
+     * @param int $agentId
+     */
+    public function setCurrentUserAgentId(int $agentId)
+    {
+        $this->session->put(self::AGENT_SESSION_KEY, $agentId);
     }
 
     /**
@@ -96,6 +122,8 @@ class FreshdeskService
      * @param Carbon|null $to
      *
      * @return int
+     *
+     * @throws ApiException
      */
     public function getTicketsCount(
         ?int $status = null,
@@ -130,34 +158,81 @@ class FreshdeskService
     /**
      * @param string $uri
      *
-     * @return bool|mixed
+     * @return mixed
+     *
+     * @throws ApiException
      */
     public function apiCall(string $uri)
     {
-        try {
-            return $this->curlCall($uri);
-        } catch (ApiException $apiException) {
-            $this->log->error('Freshdesk API error', [
-                'code' => $apiException->getCode(),
-                'message' => $apiException->getMessage(),
-                'response' => $apiException->getResponse(),
-            ]);
-        } catch (Exception $exception) {
-            $this->log->error($exception->getMessage());
-        }
-
-        return false;
+        // TODO: add cache
+        return $this->curlCall($uri);
     }
 
     /**
-     * @param $uri
-     * @return mixed
+     * @param string $name
+     * @param string $email
+     * @param string|null $redirect
+     *
+     * @return string
+     */
+    public function getSsoUrl(string $name, string $email, ?string $redirect = null): string
+    {
+        $secret = $this->config->get('shared_secret');
+        $timestamp = time();
+        $toBeHashed = $name . $secret . $email . $timestamp;
+        $hash = hash_hmac('md5', $toBeHashed, $secret);
+        $url = $this->config->get('sso_url');
+        $url .= '?name=' . urlencode($name);
+        $url .= '&email=' . urlencode($email);
+        $url .= '&timestamp=' . $timestamp;
+        $url .= '&hash=' . $hash;
+        if ($redirect) {
+            $url .= '&redirect_to=' . urlencode($redirect);
+        }
+
+        return $url;
+    }
+
+    /**
+     * @param Authenticatable $user
+     *
+     * @return string
+     *
      * @throws ApiException
      */
-    private function curlCall($uri)
+    public function getContactTicketsUrl(Authenticatable $user): string
     {
-        $key = $this->config->get('matchbingo.freshdesk.api_key');
-        $url = $this->config->get('matchbingo.freshdesk.api_url') . $uri;
+        if ($this->isCurrentUserAgent()) {
+            if (isset($user->email)) {
+                $contact = $this->getContact($user->email);
+                if ($contact) {
+                    $baseUrl = $this->config->get('tickets_url');
+                    $baseUrl .= '?orderBy=created_at&orderType=desc';
+
+                    return implode('&', [
+                        $baseUrl,
+                        $this->getQuery('agent', $this->getCurrentUserAgentId()),
+                        $this->getQuery('status', 2),
+                        $this->getQuery('requester', $contact->id),
+                    ]);
+                }
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @param string $uri
+     *
+     * @return mixed
+     *
+     * @throws ApiException
+     */
+    private function curlCall(string $uri)
+    {
+        $key = $this->config->get('api_key');
+        $url = $this->config->get('api_url') . $uri;
         $curl = curl_init($url);
         curl_setopt($curl, CURLOPT_HEADER, false);
         curl_setopt($curl, CURLOPT_USERPWD, "$key:X");
@@ -185,27 +260,13 @@ class FreshdeskService
     }
 
     /**
-     * @param string $name
-     * @param string $email
-     * @param string|null $redirect
+     * @param string $attribute
+     * @param mixed $value
      *
      * @return string
      */
-    public function getSsoUrl(string $name, string $email, ?string $redirect = null): string
+    private function getQuery(string $attribute, $value): string
     {
-        $secret = $this->config->get('matchbingo.freshdesk.shared_secret');
-        $timestamp = time();
-        $toBeHashed = $name . $secret . $email . $timestamp;
-        $hash = hash_hmac('md5', $toBeHashed, $secret);
-        $url = $this->config->get('matchbingo.freshdesk.sso_url');
-        $url .= '?name=' . urlencode($name);
-        $url .= '&email=' . urlencode($email);
-        $url .= '&timestamp=' . $timestamp;
-        $url .= '&hash=' . $hash;
-        if ($redirect) {
-            $url .= '&redirect_to=' . urlencode($redirect);
-        }
-
-        return $url;
+        return 'q[]=' . urlencode("{$attribute}:[{$value}]");
     }
 }
