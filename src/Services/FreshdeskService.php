@@ -5,7 +5,8 @@ namespace KuznetsovZfort\Freshdesk\Services;
 use Exception;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Contracts\Config\Repository as Config;
+use Illuminate\Contracts\Session\Session;
 use KuznetsovZfort\Freshdesk\Enums\TicketStatus;
 use KuznetsovZfort\Freshdesk\Exceptions\ApiException;
 
@@ -13,6 +14,26 @@ class FreshdeskService
 {
     const FACADE_ACCESSOR = 'kuznetsov-zfort.freshdesk';
     const AGENT_SESSION_KEY = 'freshdesk_agent_id';
+
+    /**
+     * @var Config
+     */
+    private $config;
+
+    /**
+     * @var Session
+     */
+    private $session;
+
+    /**
+     * @param Config $config
+     * @param Session $session
+     */
+    public function __construct(Config $config, Session $session)
+    {
+        $this->config = $config;
+        $this->session = $session;
+    }
 
     /**
      * @param string $email
@@ -75,7 +96,7 @@ class FreshdeskService
      */
     public function isCurrentUserAgent(): bool
     {
-        return Session::has(self::AGENT_SESSION_KEY);
+        return $this->session->has(self::AGENT_SESSION_KEY);
     }
 
     /**
@@ -83,7 +104,7 @@ class FreshdeskService
      */
     public function getCurrentUserAgentId(): ?int
     {
-        return Session::get(self::AGENT_SESSION_KEY);
+        return $this->session->get(self::AGENT_SESSION_KEY);
     }
 
     /**
@@ -91,7 +112,7 @@ class FreshdeskService
      */
     public function setCurrentUserAgentId(int $agentId)
     {
-        Session::put(self::AGENT_SESSION_KEY, $agentId);
+        $this->session->put(self::AGENT_SESSION_KEY, $agentId);
     }
 
     /**
@@ -155,11 +176,11 @@ class FreshdeskService
      */
     public function getSsoUrl(string $name, string $email, ?string $redirect = null): string
     {
-        $secret = config('shared_secret');
+        $secret = $this->config->get('freshdesk.shared_secret');
         $timestamp = time();
         $toBeHashed = $name . $secret . $email . $timestamp;
         $hash = hash_hmac('md5', $toBeHashed, $secret);
-        $url = config('sso_url');
+        $url = $this->config->get('freshdesk.sso_url');
         $url .= '?name=' . urlencode($name);
         $url .= '&email=' . urlencode($email);
         $url .= '&timestamp=' . $timestamp;
@@ -184,7 +205,7 @@ class FreshdeskService
             if (isset($user->email)) {
                 $contact = $this->getContact($user->email);
                 if ($contact) {
-                    $baseUrl = config('tickets_url');
+                    $baseUrl = $this->config->get('freshdesk.tickets_url');
                     $baseUrl .= '?orderBy=created_at&orderType=desc';
 
                     return implode('&', [
@@ -209,8 +230,8 @@ class FreshdeskService
      */
     private function curlCall(string $uri)
     {
-        $key = config('api_key');
-        $url = config('api_url') . $uri;
+        $key = $this->config->get('freshdesk.api_key');
+        $url = $this->config->get('freshdesk.api_url') . $uri;
         $curl = curl_init($url);
         curl_setopt($curl, CURLOPT_HEADER, false);
         curl_setopt($curl, CURLOPT_USERPWD, "$key:X");
