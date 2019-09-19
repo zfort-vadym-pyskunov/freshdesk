@@ -1,0 +1,43 @@
+{
+    "name": "kuznetsov-zfort/freshdesk",
+    "license": "MIT",
+    "keywords": ["laravel", "freshdesk"],
+    "authors": [
+        {
+            "name": "Gary Kuznetsov",
+            "email": "kuznetsov@zfort.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.1",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "illuminate/config": "5.7.*",
+        "illuminate/support": "5.7.*",
+        "kuznetsov-zfort/php-enum": "*",
+        "psr/log": "^1.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "KuznetsovZfort\\Freshdesk\\": "src/"
+        }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/kuznetsov-zfort/php-enum.git"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "KuznetsovZfort\\Freshdesk\\FreshdeskServiceProvider"
+            ],
+            "aliases": {
+                "Freshdesk": "KuznetsovZfort\\Freshdesk\\Freshdesk"
+            }
+        }
+    },
+    "prefer-stable": true
+}
