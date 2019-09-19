@@ -11,8 +11,8 @@ class FreshdeskServiceProvider extends ServiceProvider
 {
     public function register()
     {
-        $this->app->singleton(FreshdeskService::class);
-        $this->app->alias(FreshdeskService::FACADE_ACCESSOR, FreshdeskService::class);
+        $this->app->bind(FreshdeskService::class);
+        $this->app->alias(FreshdeskService::class, FreshdeskService::FACADE_ACCESSOR);
     }
 
     public function boot()
