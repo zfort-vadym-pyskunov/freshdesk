@@ -215,7 +215,7 @@ class FreshdeskService
                     return implode('&', [
                         $baseUrl,
                         $this->getQuery('agent', $this->getCurrentUserAgentId()),
-                        $this->getQuery('status', 2),
+                        $this->getQuery('status', TicketStatus::OPEN),
                         $this->getQuery('requester', $contact->id),
                     ]);
                 }
