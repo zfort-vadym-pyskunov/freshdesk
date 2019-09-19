@@ -10,6 +10,7 @@ use KuznetsovZfort\Freshdesk\Services\FreshdeskService;
  * @method static mixed getAgent(string $email)
  * @method static mixed getContact(string $email)
  * @method static bool hasAgent(string $email)
+ * @method static bool hasContact(string $email)
  * @method static mixed getNewTickets()
  * @method static bool isCurrentUserAgent()
  * @method static int|null getCurrentUserAgentId()

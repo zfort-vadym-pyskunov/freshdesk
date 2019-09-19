@@ -5,6 +5,7 @@ namespace KuznetsovZfort\Freshdesk\Services;
 use Exception;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Session\Session;
 use KuznetsovZfort\Freshdesk\Enums\TicketStatus;
@@ -14,6 +15,8 @@ class FreshdeskService
 {
     const FACADE_ACCESSOR = 'kuznetsov-zfort.freshdesk';
     const AGENT_SESSION_KEY = 'freshdesk_agent_id';
+
+    private $cache;
 
     /**
      * @var Config
@@ -26,11 +29,13 @@ class FreshdeskService
     private $session;
 
     /**
+     * @param Cache $cache
      * @param Config $config
      * @param Session $session
      */
-    public function __construct(Config $config, Session $session)
+    public function __construct(Cache $cache, Config $config, Session $session)
     {
+        $this->cache = $cache;
         $this->config = $config;
         $this->session = $session;
     }
@@ -79,6 +84,18 @@ class FreshdeskService
     public function hasAgent(string $email): bool
     {
         return !empty($this->getAgent($email));
+    }
+
+    /**
+     * @param string $email
+     *
+     * @return bool
+     *
+     * @throws ApiException
+     */
+    public function hasContact(string $email): bool
+    {
+        return !empty($this->getContact($email));
     }
 
     /**
@@ -155,19 +172,6 @@ class FreshdeskService
     }
 
     /**
-     * @param string $uri
-     *
-     * @return mixed
-     *
-     * @throws ApiException
-     */
-    public function apiCall(string $uri)
-    {
-        // TODO: add cache
-        return $this->curlCall($uri);
-    }
-
-    /**
      * @param string $name
      * @param string $email
      * @param string|null $redirect
@@ -225,8 +229,24 @@ class FreshdeskService
      * @param string $uri
      *
      * @return mixed
+     */
+    public function apiCall(string $uri)
+    {
+        $cacheKey = 'freshdesk.api-call.' . md5($uri);
+        $cacheDuration = $this->config->get('freshdesk.cache_duration');
+
+        return $this->cache->remember($cacheKey, $cacheDuration, function () use ($uri) {
+            return $this->curlCall($uri);
+        });
+    }
+
+    /**
+     * @param string $uri
+     *
+     * @return mixed
      *
      * @throws ApiException
+     * @throws Exception
      */
     private function curlCall(string $uri)
     {
