@@ -3,6 +3,7 @@
 namespace KuznetsovZfort\Freshdesk\Facades;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Facade;
 use KuznetsovZfort\Freshdesk\Services\FreshdeskService;
 
@@ -18,6 +19,7 @@ use KuznetsovZfort\Freshdesk\Services\FreshdeskService;
  * @method static int getTicketsCount(?int $status = null,?Carbon $from = null,?Carbon $to = null)
  * @method static mixed apiCall(string $uri)
  * @method static string getSsoUrl(string $name, string $email, ?string $redirect = null)
+ * @method static string getContactTicketsUrl(Authenticatable $user)
  *
  * @see FreshdeskService
  */
