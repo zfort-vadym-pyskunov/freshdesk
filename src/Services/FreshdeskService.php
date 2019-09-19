@@ -226,11 +226,19 @@ class FreshdeskService
     }
 
     /**
+     * @param string|null $attribute
+     * @param mixed|null $value
+     *
      * @return string
      */
-    public function getNewTicketUrl(): string
+    public function getNewTicketUrl(?string $attribute = null, $value = null): string
     {
-        return $this->config->get('freshdesk.new_ticket_url');
+        $url = $this->config->get('freshdesk.new_ticket_url');
+        if (!empty($attribute) && !empty($value)) {
+            $url .= '?' . $attribute . '=' . urlencode($value);
+        }
+
+        return $url;
     }
 
     /**

@@ -20,7 +20,7 @@ use KuznetsovZfort\Freshdesk\Services\FreshdeskService;
  * @method static mixed apiCall(string $uri)
  * @method static string getSsoUrl(string $name, string $email, ?string $redirect = null)
  * @method static string getContactTicketsUrl(Authenticatable $user)
- * @method static string getNewTicketUrl()
+ * @method static string getNewTicketUrl(string $attribute, $value)
  *
  * @see FreshdeskService
  */
