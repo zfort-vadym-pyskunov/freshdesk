@@ -269,6 +269,9 @@ class FreshdeskService
             case 200:
                 return json_decode($response);
                 break;
+            case 401:
+                throw new ApiException('Authorization Required', 401);
+                break;
             case 404:
                 throw new ApiException('Endpoint does not exist', 404);
                 break;
