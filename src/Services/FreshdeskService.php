@@ -49,7 +49,7 @@ class FreshdeskService
      */
     public function getAgent(string $email)
     {
-        $agents = $this->apiCall('agents?email=' . $email);
+        $agents = $this->apiCall('agents?email=' . urlencode($email));
         if (is_array($agents)) {
             return reset($agents);
         }
@@ -66,7 +66,7 @@ class FreshdeskService
      */
     public function getContact(string $email)
     {
-        $contacts = $this->apiCall('contacts?email=' . $email);
+        $contacts = $this->apiCall('contacts?email=' . urlencode($email));
         if (is_array($contacts)) {
             return reset($contacts);
         }
