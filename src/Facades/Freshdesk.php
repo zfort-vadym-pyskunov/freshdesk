@@ -21,6 +21,7 @@ use KuznetsovZfort\Freshdesk\Services\FreshdeskService;
  * @method static string getSsoUrl(string $name, string $email, ?string $redirect = null)
  * @method static string getContactTicketsUrl(Authenticatable $user)
  * @method static string getNewTicketUrl(string $attribute, $value)
+ * @method static mixed createTicket(array $data)
  *
  * @see FreshdeskService
  */

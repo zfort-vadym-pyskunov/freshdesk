@@ -41,6 +41,18 @@ class FreshdeskService
     }
 
     /**
+     * @param array $data
+     *
+     * @return mixed
+     *
+     * @throws ApiException
+     */
+    public function createTicket(array $data)
+    {
+        return $this->apiCall('tickets', $data);
+    }
+
+    /**
      * @param string $email
      *
      * @return mixed
@@ -243,11 +255,18 @@ class FreshdeskService
 
     /**
      * @param string $uri
+     * @param array $data
      *
      * @return mixed
+     *
+     * @throws ApiException
      */
-    public function apiCall(string $uri)
+    private function apiCall(string $uri, array $data = [])
     {
+        if (!empty($data)) {
+            return $this->curlCall($uri, $data);
+        }
+
         $cacheKey = 'freshdesk.api-call.' . md5($uri);
         $cacheDuration = $this->config->get('freshdesk.cache_duration');
 
@@ -258,13 +277,13 @@ class FreshdeskService
 
     /**
      * @param string $uri
+     * @param array $data
      *
      * @return mixed
      *
      * @throws ApiException
-     * @throws Exception
      */
-    private function curlCall(string $uri)
+    private function curlCall(string $uri, array $data = [])
     {
         $key = $this->config->get('freshdesk.api_key');
         $url = $this->config->get('freshdesk.api_url') . $uri;
@@ -272,6 +291,11 @@ class FreshdeskService
         curl_setopt($curl, CURLOPT_HEADER, false);
         curl_setopt($curl, CURLOPT_USERPWD, "$key:X");
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        if (!empty($data)) {
+            curl_setopt($curl, CURLOPT_POST, 1);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+        }
+
         $response = curl_exec($curl);
         $info = curl_getinfo($curl);
         $error = curl_error($curl);
