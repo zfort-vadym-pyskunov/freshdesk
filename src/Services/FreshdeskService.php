@@ -292,10 +292,10 @@ class FreshdeskService
         curl_setopt($curl, CURLOPT_USERPWD, "$key:X");
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         if (!empty($data)) {
-            curl_setopt($curl, CURLOPT_POST, 1);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+            curl_setopt($curl, CURLOPT_POST, true);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
             curl_setopt($curl, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json',
+                'Content-type: application/json',
             ]);
         }
 
@@ -310,6 +310,7 @@ class FreshdeskService
 
         switch ($info['http_code']) {
             case 200:
+            case 201:
                 return json_decode($response);
                 break;
             case 401:
