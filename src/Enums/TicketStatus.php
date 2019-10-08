@@ -15,9 +15,9 @@ class TicketStatus extends AbstractEnum
      * @var array
      */
     public static $list = [
-        self::OPEN => 'OPEN',
-        self::PENDING => 'PENDING',
-        self::RESOLVED => 'RESOLVED',
-        self::CLOSED => 'CLOSED',
+        self::OPEN => 'Open',
+        self::PENDING => 'Pending',
+        self::RESOLVED => 'Resolved',
+        self::CLOSED => 'Closed',
     ];
 }
