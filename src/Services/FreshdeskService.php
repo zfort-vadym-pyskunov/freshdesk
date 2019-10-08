@@ -313,6 +313,9 @@ class FreshdeskService
             case 201:
                 return json_decode($response);
                 break;
+            case 400:
+                throw new ApiException('Validation Error', 400, $response);
+                break;
             case 401:
                 throw new ApiException('Authorization Required', 401);
                 break;
