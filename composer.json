@@ -1,5 +1,5 @@
 {
-    "name": "kuznetsov-zfort/freshdesk",
+    "name": "zfort-vadym-pyskunov/freshdesk",
     "license": "MIT",
     "keywords": ["laravel", "freshdesk"],
     "authors": [
@@ -16,7 +16,7 @@
         "illuminate/auth": "5.7.*|^5.8|^6.0|^7.0|^8.0",
         "illuminate/config": "5.7.*|^5.8|^6.0|^7.0|^8.0",
         "illuminate/support": "5.7.*|^5.8|^6.0|^7.0|^8.0",
-        "kuznetsov-zfort/php-enum": ">=1.0.3"
+        "zfort-vadym-pyskunov/php-enum": ">=1.0.3"
     },
     "autoload": {
         "psr-4": {
@@ -26,7 +26,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/kuznetsov-zfort/php-enum.git"
+            "url": "https://github.com/zfort-vadym-pyskunov/php-enum.git"
         }
     ],
     "extra": {
